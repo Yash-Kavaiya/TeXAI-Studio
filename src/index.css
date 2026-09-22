@@ -1,0 +1,55 @@
+:root {
+  --text: #24262b;
+  --text-muted: #6b6375;
+  --bg: #ffffff;
+  --bg-alt: #f4f3ec;
+  --border: #e5e4e7;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --error: #d1242f;
+  --warning: #9a6700;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e5e7eb;
+    --text-muted: #9ca3af;
+    --bg: #16171d;
+    --bg-alt: #1f2028;
+    --border: #2e303a;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --error: #ff7b72;
+    --warning: #d29922;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font: 14px/1.45 var(--sans);
+  color: var(--text);
+  background: var(--bg);
+}
+
+button {
+  font: inherit;
+}

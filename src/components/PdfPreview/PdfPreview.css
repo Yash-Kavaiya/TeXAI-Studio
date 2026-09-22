@@ -1,0 +1,16 @@
+.pdf-preview {
+  height: 100%;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-alt);
+}
+
+.pdf-preview-page {
+  max-width: 100%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  background: white;
+}

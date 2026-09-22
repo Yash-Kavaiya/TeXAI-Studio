@@ -1,0 +1,29 @@
+.split-pane {
+  display: grid;
+  grid-template-columns: 220px 1fr 1fr;
+  flex: 1;
+  min-height: 0;
+}
+
+.split-pane-left,
+.split-pane-right {
+  min-width: 0;
+  overflow: auto;
+  border-right: 1px solid var(--border);
+}
+
+.split-pane-right {
+  border-right: none;
+  border-left: 1px solid var(--border);
+}
+
+.split-pane-center {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pane-placeholder {
+  padding: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}

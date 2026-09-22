@@ -1,0 +1,59 @@
+.project-switcher {
+  position: relative;
+}
+
+.project-switcher-trigger {
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.project-switcher-trigger:hover {
+  background: var(--bg-alt);
+}
+
+.project-switcher-caret {
+  font-size: 10px;
+}
+
+.project-switcher-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 200px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.project-switcher-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-switcher-item:hover {
+  background: var(--bg-alt);
+}
+
+.project-switcher-item.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.project-switcher-new {
+  border-top: 1px solid var(--border);
+  color: var(--accent);
+}

@@ -1,0 +1,27 @@
+.file-tree {
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+.file-tree-folder {
+  padding: 3px 8px;
+  color: var(--text-muted);
+}
+
+.file-tree-file {
+  padding: 3px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-tree-file:hover {
+  background: var(--accent-bg);
+}
+
+.file-tree-file.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}

@@ -1,0 +1,45 @@
+.log-panel {
+  height: 100%;
+  overflow: auto;
+  font-size: 13px;
+  font-family: var(--mono);
+}
+
+.log-entry {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 4px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.log-entry:hover {
+  background: var(--bg-alt);
+}
+
+.log-entry-level {
+  flex-shrink: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.log-entry-error .log-entry-level {
+  color: var(--error);
+}
+
+.log-entry-warning .log-entry-level {
+  color: var(--warning);
+}
+
+.log-entry-location {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.log-entry-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
