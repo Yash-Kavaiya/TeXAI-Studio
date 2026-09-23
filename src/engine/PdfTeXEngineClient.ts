@@ -67,6 +67,12 @@ export class PdfTeXEngineClient {
     this.requireWorker().postMessage({ cmd: 'writefile', url: filename, src: content })
   }
 
+  /** Clears the engine's working directory (project files, .aux, .bbl…)
+   * while keeping the downloaded TeX package cache. */
+  flushWorkDir(): void {
+    this.requireWorker().postMessage({ cmd: 'flushcache' })
+  }
+
   makeMemFSFolder(folder: string): void {
     if (folder === '' || folder === '/') return
     this.requireWorker().postMessage({ cmd: 'mkdir', url: folder })

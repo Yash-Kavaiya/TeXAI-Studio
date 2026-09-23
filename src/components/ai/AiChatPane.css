@@ -1,0 +1,133 @@
+.ai-chat-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ai-chat-transcript {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 2px;
+  min-height: 120px;
+  max-height: 320px;
+}
+
+.ai-chat-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 8px 0;
+}
+
+.ai-chat-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ai-chat-bubble {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 90%;
+}
+
+.ai-chat-bubble-user {
+  align-self: flex-end;
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.ai-chat-bubble-assistant {
+  align-self: flex-start;
+  background: var(--bg-alt);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ai-chat-loading {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.ai-chat-error {
+  color: var(--error);
+}
+
+.ai-chat-error-message {
+  margin: 0 0 8px;
+}
+
+.ai-chat-retry-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--error);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--error);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ai-chat-retry-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-chat-summary {
+  margin: 0 0 8px;
+}
+
+.ai-chat-memory-note {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.ai-chat-open-btn {
+  margin-top: 8px;
+  padding: 6px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.ai-chat-open-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.ai-chat-input-row input {
+  flex: 1;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.ai-chat-input-row button {
+  padding: 8px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ai-chat-input-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

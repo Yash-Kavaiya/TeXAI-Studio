@@ -1,0 +1,18 @@
+.file-tree-preview {
+  font-size: 12px;
+  font-family: var(--mono);
+  background: var(--bg-alt);
+  border-radius: 4px;
+  padding: 8px;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.file-tree-preview-folder {
+  color: var(--text-muted);
+  padding: 1px 0;
+}
+
+.file-tree-preview-file {
+  padding: 1px 0;
+}

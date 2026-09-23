@@ -65,3 +65,37 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.new-project-modal {
+  width: 440px;
+}
+
+.new-project-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.new-project-tab {
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.new-project-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.new-project-ai-locked {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 16px 0;
+}

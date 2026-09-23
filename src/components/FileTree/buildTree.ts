@@ -9,13 +9,15 @@ export function buildTree(files: { path: string }[]): TreeNode[] {
   const root: TreeNode[] = []
 
   for (const file of files) {
-    const parts = file.path.split('/')
+    // A trailing slash marks an (empty) folder, e.g. "figures/".
+    const isFolderMarker = file.path.endsWith('/')
+    const parts = file.path.split('/').filter(Boolean)
     let level = root
     let currentPath = ''
 
     parts.forEach((part, index) => {
       currentPath = currentPath ? `${currentPath}/${part}` : part
-      const isFile = index === parts.length - 1
+      const isFile = index === parts.length - 1 && !isFolderMarker
 
       let node = level.find((n) => n.name === part)
       if (!node) {

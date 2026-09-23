@@ -6,6 +6,7 @@ import { FileTree } from './components/FileTree/FileTree'
 import { PdfPreview } from './components/PdfPreview/PdfPreview'
 import { LogPanel } from './components/LogPanel/LogPanel'
 import { ProjectSwitcher } from './components/ProjectSwitcher/ProjectSwitcher'
+import { SettingsPanel } from './components/settings/SettingsPanel'
 import { parseLatexLog } from './engine/logParser'
 import type { LogEntry } from './engine/types'
 import { useAutosave } from './hooks/useAutosave'
@@ -22,6 +23,7 @@ function App() {
   const { compile, compiling, pdfBytes, log } = useCompile()
   const editorRef = useRef<EditorHandle>(null)
   const [pendingJumpLine, setPendingJumpLine] = useState<number | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
 
   const switchToProject = useCallback(
     async (id: string) => {
@@ -84,9 +86,11 @@ function App() {
             <span className="toolbar-project-name">Loading…</span>
           )
         }
-        onCompile={() => compile(files, rootFile)}
+        onCompile={() => compile(projectId, files, rootFile)}
         compiling={compiling}
+        onOpenSettings={() => setShowSettings(true)}
       />
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
       <SplitPane
         left={<FileTree files={files} activePath={activeFilePath} onSelectFile={setActiveFile} />}
         center={

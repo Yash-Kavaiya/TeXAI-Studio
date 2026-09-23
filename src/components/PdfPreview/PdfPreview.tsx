@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { getDocument, type PDFDocumentProxy } from 'pdfjs-dist'
+import { getDocument } from 'pdfjs-dist'
 import './pdfjsSetup'
 import './PdfPreview.css'
 
@@ -14,12 +14,11 @@ export function PdfPreview({ pdfBytes }: PdfPreviewProps) {
     if (!pdfBytes || !containerRef.current) return
 
     let cancelled = false
-    let doc: PDFDocumentProxy | undefined
+    // pdf.js detaches/transfers the buffer it's given, so hand it a copy.
+    const loadingTask = getDocument({ data: pdfBytes.slice() })
 
     async function render() {
-      // pdf.js detaches/transfers the buffer it's given, so hand it a copy.
-      const data = pdfBytes!.slice()
-      doc = await getDocument({ data }).promise
+      const doc = await loadingTask.promise
       if (cancelled) return
 
       const container = containerRef.current!
@@ -47,7 +46,10 @@ export function PdfPreview({ pdfBytes }: PdfPreviewProps) {
 
     return () => {
       cancelled = true
-      doc?.cleanup()
+      // destroy() (unlike doc.cleanup()) cancels in-flight page renders and
+      // terminates this document's pdf.js worker — otherwise every compile
+      // leaks a worker.
+      loadingTask.destroy().catch(() => {})
     }
   }, [pdfBytes])
 
