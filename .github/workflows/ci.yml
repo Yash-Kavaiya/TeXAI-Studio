@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch/PR supersedes an in-flight run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, typecheck & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # `npm run build` is `tsc -b && vite build`, so this also typechecks.
+      - name: Typecheck & build
+        run: npm run build
+
+      # The in-browser pdfTeX engine resolves packages from this static
+      # mirror; fail fast if the files it can't run without went missing.
+      - name: Verify TeX engine assets
+        run: |
+          for f in \
+            dist/texlive/swiftlatexpdftex.js \
+            dist/texlive/swiftlatexpdftex.wasm \
+            dist/texlive-pkgs/pdftex/10/swiftlatexpdftex.fmt \
+            dist/texlive-pkgs/pdftex/11/pdftex.map \
+            dist/texlive-pkgs/pdftex/26/article.cls; do
+            test -s "$f" || { echo "::error::missing or empty: $f"; exit 1; }
+          done
+          echo "dist size: $(du -sh dist | cut -f1), files: $(find dist -type f | wc -l)"
+
+      # Test fixtures dropped into public/ during local debugging (e.g.
+      # public/__harness.js) must never ship.
+      - name: No temporary files in public/
+        run: |
+          if ls public/__* >/dev/null 2>&1; then
+            echo "::error::temporary files in public/: $(ls public/__*)"
+            exit 1
+          fi

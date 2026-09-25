@@ -3,6 +3,45 @@
   font-size: 13px;
 }
 
+.file-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.file-tree-upload {
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: inherit;
+  cursor: pointer;
+}
+
+.file-tree-upload:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.file-tree-upload:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.file-tree-notice {
+  padding: 4px 8px 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .file-tree-folder {
   padding: 3px 8px;
   color: var(--text-muted);

@@ -69,7 +69,7 @@ export function useCompile() {
         engine.makeMemFSFolder(dir)
       }
       for (const file of files) {
-        if (!file.path.endsWith('/')) engine.writeMemFSFile(file.path, file.content)
+        if (!file.path.endsWith('/')) engine.writeMemFSFile(file.path, file.data ?? file.content)
       }
       for (const style of findBibStyles(files)) {
         const bst = await fetchBibStyle(style)

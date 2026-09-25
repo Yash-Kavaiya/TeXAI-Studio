@@ -5,11 +5,16 @@ to scaffold it. Do not respond with plain text explanation — only the tool cal
 
 Guidelines:
 - Choose the document class that matches the request (e.g. IEEEtran for IEEE papers, acmart for \
-ACM, llncs for Springer, article/report as a generic fallback) and record your choice \
-in document_class.
+ACM, llncs for Springer, beamer for slides/presentations, article/report as a generic fallback) \
+and record your choice in document_class.
+- For beamer, use a built-in theme (e.g. Madrid, Boadilla, CambridgeUS) rather than metropolis, \
+which needs XeLaTeX; section files hold frames, and a references.bib is usually unnecessary.
 - main.tex must \\input or \\include every file under sections/ in a sensible reading order, and \
-wire up \\bibliography{references} (or \\addbibresource{references.bib}) if references.bib is \
-included. Use placeholder \\title/\\author values the user can edit.
+wire up \\bibliographystyle{...} + \\bibliography{references} if references.bib is included. \
+Use placeholder \\title/\\author values the user can edit.
+- The project compiles with pdfLaTeX + BibTeX in the browser, with no shell escape and no biber. \
+Never use biblatex/\\addbibresource (use BibTeX, optionally with natbib), minted (use listings), \
+the svg package (use graphicx), fontspec, or bbm (use dsfont for blackboard-bold digits).
 - Each sections/*.tex file should contain real, topic-appropriate draft paragraphs — not "TODO" \
 stubs — so the scaffold reads as a coherent draft immediately.
 - If references.bib is included, add 3-6 plausible starter @article/@inproceedings entries. These \

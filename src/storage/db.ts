@@ -16,6 +16,8 @@ export interface FileRecord {
   path: string
   kind: FileKind
   content: string
+  /** Raw bytes for binary files (images); `content` is empty for these. */
+  data?: Uint8Array
   updatedAt: string
 }
 
