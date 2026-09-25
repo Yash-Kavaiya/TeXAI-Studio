@@ -7,6 +7,7 @@ import { PdfPreview } from './components/PdfPreview/PdfPreview'
 import { LogPanel } from './components/LogPanel/LogPanel'
 import { ProjectSwitcher } from './components/ProjectSwitcher/ProjectSwitcher'
 import { SettingsPanel } from './components/settings/SettingsPanel'
+import { BinaryFilePreview } from './components/BinaryFilePreview/BinaryFilePreview'
 import { parseLatexLog } from './engine/logParser'
 import type { LogEntry } from './engine/types'
 import { useAutosave } from './hooks/useAutosave'
@@ -15,11 +16,21 @@ import { useProjectStore } from './state/projectStore'
 import { setMeta } from './storage/metaRepo'
 import { loadProjectData } from './storage/loadProject'
 import { ensureBootstrapped } from './storage/bootstrap'
+import { IMPORT_ACCEPT, importFiles } from './storage/importFiles'
 import './App.css'
 
 function App() {
-  const { projectId, projectName, files, activeFilePath, rootFile, loadProject, setActiveFile, updateFileContent } =
-    useProjectStore()
+  const {
+    projectId,
+    projectName,
+    files,
+    activeFilePath,
+    rootFile,
+    loadProject,
+    setActiveFile,
+    updateFileContent,
+    upsertFiles,
+  } = useProjectStore()
   const { compile, compiling, pdfBytes, log } = useCompile()
   const editorRef = useRef<EditorHandle>(null)
   const [pendingJumpLine, setPendingJumpLine] = useState<number | null>(null)
@@ -62,6 +73,13 @@ function App() {
     }
   }, [activeFilePath, pendingJumpLine])
 
+  async function handleUpload(picked: File[]): Promise<string[]> {
+    const { imported, skipped } = await importFiles(projectId, files, picked)
+    upsertFiles(imported)
+    if (imported.length > 0) setActiveFile(imported[imported.length - 1].path)
+    return skipped
+  }
+
   function handleJumpToEntry(entry: LogEntry) {
     if (entry.line === undefined) return
     if (entry.file && entry.file !== activeFilePath && files.some((f) => f.path === entry.file)) {
@@ -92,9 +110,19 @@ function App() {
       />
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
       <SplitPane
-        left={<FileTree files={files} activePath={activeFilePath} onSelectFile={setActiveFile} />}
+        left={
+          <FileTree
+            files={files}
+            activePath={activeFilePath}
+            onSelectFile={setActiveFile}
+            uploadAccept={IMPORT_ACCEPT}
+            onUpload={handleUpload}
+          />
+        }
         center={
-          activeFile ? (
+          activeFile?.data ? (
+            <BinaryFilePreview path={activeFile.path} data={activeFile.data} />
+          ) : activeFile ? (
             <Editor
               key={`${projectId}:${activeFile.path}`}
               ref={editorRef}
