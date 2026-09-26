@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Editor, type EditorHandle } from './components/Editor/Editor'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { SplitPane } from './components/layout/SplitPane'
+import { ResizeHandle } from './components/layout/ResizeHandle'
+import { useStoredNumber } from './hooks/useStoredNumber'
 import { FileTree, type FileTreeActions } from './components/FileTree/FileTree'
 import { PdfPreview } from './components/PdfPreview/PdfPreview'
 import { LogPanel } from './components/LogPanel/LogPanel'
@@ -26,6 +28,8 @@ import { IMPORT_ACCEPT, importFiles } from './storage/importFiles'
 import { createEntry, deleteEntry, renameEntry } from './storage/fileOps'
 import './App.css'
 
+const DEFAULT_LOG_HEIGHT = 140
+
 function App() {
   const {
     projectId,
@@ -45,6 +49,7 @@ function App() {
   const editorRef = useRef<EditorHandle>(null)
   const [pendingJumpLine, setPendingJumpLine] = useState<number | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [logHeight, setLogHeight] = useStoredNumber('texai.layout.logHeight', DEFAULT_LOG_HEIGHT)
 
   const switchToProject = useCallback(
     async (id: string) => {
@@ -145,6 +150,12 @@ function App() {
     await switchToProject(nextId)
   }
 
+  // The log panel sits at the bottom, so its height is the distance from the
+  // pointer to the bottom of the window (kept between 60px and 60% of it).
+  function dragLogPanel(clientY: number) {
+    setLogHeight(Math.round(Math.min(window.innerHeight * 0.6, Math.max(60, window.innerHeight - clientY))))
+  }
+
   function handleJumpToEntry(entry: LogEntry) {
     if (entry.line === undefined) return
     if (entry.file && entry.file !== activeFilePath && files.some((f) => f.path === entry.file)) {
@@ -208,7 +219,13 @@ function App() {
         }
         right={<PdfPreview pdfBytes={pdfBytes} fileName={projectName} />}
       />
-      <div className="log-panel-container">
+      <ResizeHandle
+        orientation="horizontal"
+        label="Resize log panel"
+        onDrag={dragLogPanel}
+        onReset={() => setLogHeight(DEFAULT_LOG_HEIGHT)}
+      />
+      <div className="log-panel-container" style={{ height: logHeight }}>
         <LogPanel entries={logEntries} rawLog={log} onJumpToEntry={handleJumpToEntry} />
       </div>
     </div>

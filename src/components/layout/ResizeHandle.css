@@ -1,0 +1,48 @@
+.resize-handle {
+  position: relative;
+  z-index: 5;
+  background: var(--border);
+  flex-shrink: 0;
+  touch-action: none;
+}
+
+.resize-handle-vertical {
+  width: 1px;
+  cursor: col-resize;
+}
+
+.resize-handle-horizontal {
+  height: 1px;
+  cursor: row-resize;
+}
+
+/* A wider invisible hit area than the 1px line. */
+.resize-handle::after {
+  content: '';
+  position: absolute;
+}
+
+.resize-handle-vertical::after {
+  inset: 0 -4px;
+}
+
+.resize-handle-horizontal::after {
+  inset: -4px 0;
+}
+
+.resize-handle:hover,
+.resize-handle:active {
+  background: var(--accent);
+}
+
+body.resizing-vertical,
+body.resizing-vertical * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+body.resizing-horizontal,
+body.resizing-horizontal * {
+  cursor: row-resize !important;
+  user-select: none;
+}

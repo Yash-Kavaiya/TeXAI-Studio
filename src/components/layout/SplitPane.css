@@ -1,6 +1,7 @@
 .split-pane {
   display: grid;
-  grid-template-columns: 220px 1fr 1fr;
+  /* Columns are set inline from the (resizable) pane sizes. */
+  grid-template-columns: 220px auto 1fr auto 1fr;
   flex: 1;
   min-height: 0;
 }
@@ -9,12 +10,6 @@
 .split-pane-right {
   min-width: 0;
   overflow: auto;
-  border-right: 1px solid var(--border);
-}
-
-.split-pane-right {
-  border-right: none;
-  border-left: 1px solid var(--border);
 }
 
 .split-pane-center {
