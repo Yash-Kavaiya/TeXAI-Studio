@@ -59,7 +59,10 @@ export function PdfPreview({ pdfBytes, fileName }: PdfPreviewProps) {
     return () => observer.disconnect()
   }, [pdfBytes])
 
-  const fitScale = pageWidth > 0 && containerWidth > 0 ? (containerWidth - PAGE_GUTTER) / pageWidth : 1
+  // Round the fit scale *down*: rounding up can make the page a pixel wider
+  // than the pane and bring in a horizontal scrollbar.
+  const fitScale =
+    pageWidth > 0 && containerWidth > 0 ? Math.floor(((containerWidth - PAGE_GUTTER) / pageWidth) * 100) / 100 : 1
   const scale = clamp(zoom === 'fit' ? fitScale : zoom)
   // Round so sub-pixel resize jitter doesn't trigger a re-render.
   const renderScale = Math.round(scale * 100) / 100
