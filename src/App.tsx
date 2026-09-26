@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Editor, type EditorHandle } from './components/Editor/Editor'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { SplitPane } from './components/layout/SplitPane'
-import { FileTree } from './components/FileTree/FileTree'
+import { FileTree, type FileTreeActions } from './components/FileTree/FileTree'
 import { PdfPreview } from './components/PdfPreview/PdfPreview'
 import { LogPanel } from './components/LogPanel/LogPanel'
 import { ProjectSwitcher } from './components/ProjectSwitcher/ProjectSwitcher'
@@ -17,6 +17,7 @@ import { setMeta } from './storage/metaRepo'
 import { loadProjectData } from './storage/loadProject'
 import { ensureBootstrapped } from './storage/bootstrap'
 import { IMPORT_ACCEPT, importFiles } from './storage/importFiles'
+import { createEntry, deleteEntry, renameEntry } from './storage/fileOps'
 import './App.css'
 
 function App() {
@@ -30,6 +31,8 @@ function App() {
     setActiveFile,
     updateFileContent,
     upsertFiles,
+    removeFiles,
+    moveFiles,
   } = useProjectStore()
   const { compile, compiling, pdfBytes, log } = useCompile()
   const editorRef = useRef<EditorHandle>(null)
@@ -73,11 +76,32 @@ function App() {
     }
   }, [activeFilePath, pendingJumpLine])
 
-  async function handleUpload(picked: File[]): Promise<string[]> {
-    const { imported, skipped } = await importFiles(projectId, files, picked)
-    upsertFiles(imported)
-    if (imported.length > 0) setActiveFile(imported[imported.length - 1].path)
-    return skipped
+  const fileTreeActions: FileTreeActions = {
+    async create(input, type) {
+      const result = await createEntry(projectId, files, input, type)
+      if ('error' in result) return result.error
+      upsertFiles([result.file])
+      if (type === 'file') setActiveFile(result.file.path)
+      return null
+    },
+    async rename(path, newName) {
+      const result = await renameEntry(files, path, newName, rootFile)
+      if ('error' in result) return result.error
+      moveFiles(result.moves)
+      return null
+    },
+    async remove(path) {
+      const result = await deleteEntry(files, path, rootFile)
+      if ('error' in result) return result.error
+      removeFiles(result.paths)
+      return null
+    },
+    async upload(picked) {
+      const { imported, skipped } = await importFiles(projectId, files, picked)
+      upsertFiles(imported)
+      if (imported.length > 0) setActiveFile(imported[imported.length - 1].path)
+      return skipped
+    },
   }
 
   function handleJumpToEntry(entry: LogEntry) {
@@ -115,8 +139,9 @@ function App() {
             files={files}
             activePath={activeFilePath}
             onSelectFile={setActiveFile}
+            rootFile={rootFile}
             uploadAccept={IMPORT_ACCEPT}
-            onUpload={handleUpload}
+            actions={fileTreeActions}
           />
         }
         center={

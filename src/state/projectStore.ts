@@ -25,6 +25,8 @@ interface ProjectState {
   setActiveFile: (path: string) => void
   updateFileContent: (path: string, content: string) => void
   upsertFiles: (files: ProjectFile[]) => void
+  removeFiles: (paths: string[]) => void
+  moveFiles: (moves: { from: string; to: string }[]) => void
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
@@ -44,5 +46,21 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set((state) => {
       const incomingPaths = new Set(incoming.map((f) => f.path))
       return { files: [...state.files.filter((f) => !incomingPaths.has(f.path)), ...incoming] }
+    }),
+  removeFiles: (paths) =>
+    set((state) => {
+      const removed = new Set(paths)
+      return {
+        files: state.files.filter((f) => !removed.has(f.path)),
+        activeFilePath: removed.has(state.activeFilePath) ? state.rootFile : state.activeFilePath,
+      }
+    }),
+  moveFiles: (moves) =>
+    set((state) => {
+      const to = new Map(moves.map((m) => [m.from, m.to]))
+      return {
+        files: state.files.map((f) => (to.has(f.path) ? { ...f, path: to.get(f.path)! } : f)),
+        activeFilePath: to.get(state.activeFilePath) ?? state.activeFilePath,
+      }
     }),
 }))
