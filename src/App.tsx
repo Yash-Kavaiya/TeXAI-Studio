@@ -29,6 +29,8 @@ import { createEntry, deleteEntry, renameEntry } from './storage/fileOps'
 import './App.css'
 
 const DEFAULT_LOG_HEIGHT = 140
+// Auto-compile waits for typing to pause this long.
+const AUTO_COMPILE_DELAY_MS = 1500
 
 function App() {
   const {
@@ -50,6 +52,7 @@ function App() {
   const [pendingJumpLine, setPendingJumpLine] = useState<number | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [logHeight, setLogHeight] = useStoredNumber('texai.layout.logHeight', DEFAULT_LOG_HEIGHT)
+  const [autoCompile, setAutoCompile] = useStoredNumber('texai.autoCompile', 0)
 
   const switchToProject = useCallback(
     async (id: string) => {
@@ -80,6 +83,33 @@ function App() {
   const handleCompile = useCallback(() => {
     if (projectId && !compiling) void compile(projectId, files, rootFile)
   }, [compile, compiling, projectId, files, rootFile])
+
+  // Auto-compile: recompile once edits pause. Read through refs so the timer
+  // re-arms only when files change, not on every render. An edit that lands
+  // mid-compile is queued and compiled as soon as the current run finishes.
+  const handleCompileRef = useRef(handleCompile)
+  const compilingRef = useRef(compiling)
+  const autoCompilePendingRef = useRef(false)
+  useEffect(() => {
+    handleCompileRef.current = handleCompile
+    compilingRef.current = compiling
+  })
+
+  useEffect(() => {
+    if (!autoCompile || !projectId) return
+    const timer = setTimeout(() => {
+      if (compilingRef.current) autoCompilePendingRef.current = true
+      else handleCompileRef.current()
+    }, AUTO_COMPILE_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [files, autoCompile, projectId])
+
+  useEffect(() => {
+    if (!compiling && autoCompilePendingRef.current) {
+      autoCompilePendingRef.current = false
+      handleCompileRef.current()
+    }
+  }, [compiling])
 
   // Ctrl/Cmd+S and Ctrl/Cmd+Enter compile from anywhere. Inside the editor
   // CodeMirror handles them first and marks the event as handled.
@@ -186,6 +216,8 @@ function App() {
           )
         }
         onCompile={handleCompile}
+        autoCompile={autoCompile === 1}
+        onToggleAutoCompile={(on) => setAutoCompile(on ? 1 : 0)}
         compiling={compiling}
         onOpenSettings={() => setShowSettings(true)}
       />

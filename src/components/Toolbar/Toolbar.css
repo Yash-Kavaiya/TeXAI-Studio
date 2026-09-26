@@ -50,3 +50,18 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.toolbar-auto-compile {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.toolbar-auto-compile input {
+  margin: 0;
+  accent-color: var(--accent);
+}
