@@ -4,7 +4,8 @@ import { bulkAddFiles, inferFileKind } from './filesRepo'
 export interface ProjectTemplateInput {
   name: string
   rootFile: string
-  files: { path: string; content: string }[]
+  /** `data` carries raw bytes for binary files (images); `content` is then empty. */
+  files: { path: string; content: string; data?: Uint8Array }[]
 }
 
 /** The single place that creates a Project + its Files together — used by
@@ -29,6 +30,7 @@ export async function createProjectWithFiles(input: ProjectTemplateInput): Promi
       path: file.path,
       kind: inferFileKind(file.path),
       content: file.content,
+      ...(file.data ? { data: file.data } : {}),
       updatedAt: now,
     })),
   )

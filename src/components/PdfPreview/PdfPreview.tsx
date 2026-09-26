@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getDocument, type PDFDocumentProxy } from 'pdfjs-dist'
 import './pdfjsSetup'
+import { downloadBytes, safeFileName } from '../../utils/download'
 import './PdfPreview.css'
 
 interface PdfPreviewProps {
@@ -107,13 +108,7 @@ export function PdfPreview({ pdfBytes, fileName }: PdfPreviewProps) {
   }, [doc, renderScale])
 
   function download() {
-    if (!pdfBytes) return
-    const url = URL.createObjectURL(new Blob([pdfBytes.slice()], { type: 'application/pdf' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${fileName || 'document'}.pdf`
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    if (pdfBytes) downloadBytes(pdfBytes, `${safeFileName(fileName, 'document')}.pdf`, 'application/pdf')
   }
 
   if (!pdfBytes) {

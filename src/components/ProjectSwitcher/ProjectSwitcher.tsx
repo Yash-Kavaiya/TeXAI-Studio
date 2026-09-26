@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { deleteProject, listProjects, renameProject } from '../../storage/projectsRepo'
 import type { ProjectRecord } from '../../storage/db'
+import { createProjectWithFiles } from '../../storage/projectFactory'
+import { projectFromZip } from '../../storage/projectZip'
 import { NewProjectModal } from './NewProjectModal'
 import './ProjectSwitcher.css'
 
@@ -11,6 +13,8 @@ interface ProjectSwitcherProps {
   onProjectRenamed: (projectId: string, name: string) => void
   /** Called after a project (possibly the open one) has been deleted. */
   onProjectDeleted: (projectId: string) => void
+  /** Downloads the open project as a .zip. */
+  onExportCurrent: () => void
 }
 
 type Edit = { id: string; mode: 'rename' | 'delete' }
@@ -21,6 +25,7 @@ export function ProjectSwitcher({
   onSwitchProject,
   onProjectRenamed,
   onProjectDeleted,
+  onExportCurrent,
 }: ProjectSwitcherProps) {
   const [open, setOpen] = useState(false)
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
@@ -28,6 +33,8 @@ export function ProjectSwitcher({
   const [edit, setEdit] = useState<Edit | null>(null)
   const [draft, setDraft] = useState('')
   const rootRef = useRef<HTMLDivElement>(null)
+  const zipInputRef = useRef<HTMLInputElement>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -50,6 +57,26 @@ export function ProjectSwitcher({
   function close() {
     setOpen(false)
     setEdit(null)
+    setNotice(null)
+  }
+
+  async function importZip(file: File | undefined) {
+    if (zipInputRef.current) zipInputRef.current.value = ''
+    if (!file) return
+    setNotice(null)
+    try {
+      const { skipped, ...project } = await projectFromZip(file)
+      const projectId = await createProjectWithFiles(project)
+      onSwitchProject(projectId)
+      if (skipped.length > 0) {
+        setProjects(await listProjects())
+        setNotice(`Imported. Skipped unsupported files: ${skipped.join(', ')}`)
+      } else {
+        close()
+      }
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : String(err))
+    }
   }
 
   function handleCreated(projectId: string) {
@@ -166,9 +193,29 @@ export function ProjectSwitcher({
               </div>
             )
           })}
+          {notice && <div className="project-switcher-notice">{notice}</div>}
           <div className="project-switcher-item project-switcher-new" onClick={() => setShowNewProjectModal(true)}>
             + New Project
           </div>
+          <div className="project-switcher-item project-switcher-footer" onClick={() => zipInputRef.current?.click()}>
+            Import .zip…
+          </div>
+          <div
+            className="project-switcher-item project-switcher-footer"
+            onClick={() => {
+              onExportCurrent()
+              close()
+            }}
+          >
+            Download project (.zip)
+          </div>
+          <input
+            ref={zipInputRef}
+            type="file"
+            accept=".zip,application/zip"
+            hidden
+            onChange={(e) => void importZip(e.target.files?.[0])}
+          />
         </div>
       )}
       {showNewProjectModal && (

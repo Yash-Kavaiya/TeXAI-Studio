@@ -20,6 +20,8 @@ import { ensureBootstrapped } from './storage/bootstrap'
 import { listProjects } from './storage/projectsRepo'
 import { createProjectWithFiles } from './storage/projectFactory'
 import blankMainTex from './storage/blankProject/main.tex?raw'
+import { projectToZip } from './storage/projectZip'
+import { downloadBytes, safeFileName } from './utils/download'
 import { IMPORT_ACCEPT, importFiles } from './storage/importFiles'
 import { createEntry, deleteEntry, renameEntry } from './storage/fileOps'
 import './App.css'
@@ -164,6 +166,9 @@ function App() {
               onSwitchProject={(id) => void switchToProject(id)}
               onProjectRenamed={(id, name) => id === projectId && setProjectName(name)}
               onProjectDeleted={(id) => void handleProjectDeleted(id)}
+              onExportCurrent={() =>
+                downloadBytes(projectToZip(files), `${safeFileName(projectName, 'project')}.zip`, 'application/zip')
+              }
             />
           ) : (
             <span className="toolbar-project-name">Loading…</span>

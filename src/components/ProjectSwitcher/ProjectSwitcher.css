@@ -134,3 +134,15 @@
   background: var(--bg);
   color: inherit;
 }
+
+.project-switcher-footer {
+  color: var(--text-muted);
+}
+
+.project-switcher-notice {
+  padding: 6px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: normal;
+}
