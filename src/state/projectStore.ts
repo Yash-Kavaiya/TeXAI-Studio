@@ -23,6 +23,7 @@ interface ProjectState {
   rootFile: string
   loadProject: (project: LoadedProject) => void
   setActiveFile: (path: string) => void
+  setProjectName: (name: string) => void
   updateFileContent: (path: string, content: string) => void
   upsertFiles: (files: ProjectFile[]) => void
   removeFiles: (paths: string[]) => void
@@ -38,6 +39,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
   loadProject: ({ projectId, projectName, rootFile, files }) =>
     set({ projectId, projectName, rootFile, files, activeFilePath: rootFile }),
   setActiveFile: (path) => set({ activeFilePath: path }),
+  setProjectName: (name) => set({ projectName: name }),
   updateFileContent: (path, content) =>
     set((state) => ({
       files: state.files.map((f) => (f.path === path ? { ...f, content } : f)),

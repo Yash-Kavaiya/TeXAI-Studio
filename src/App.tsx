@@ -17,6 +17,9 @@ import { useProjectStore } from './state/projectStore'
 import { setMeta } from './storage/metaRepo'
 import { loadProjectData } from './storage/loadProject'
 import { ensureBootstrapped } from './storage/bootstrap'
+import { listProjects } from './storage/projectsRepo'
+import { createProjectWithFiles } from './storage/projectFactory'
+import blankMainTex from './storage/blankProject/main.tex?raw'
 import { IMPORT_ACCEPT, importFiles } from './storage/importFiles'
 import { createEntry, deleteEntry, renameEntry } from './storage/fileOps'
 import './App.css'
@@ -34,6 +37,7 @@ function App() {
     upsertFiles,
     removeFiles,
     moveFiles,
+    setProjectName,
   } = useProjectStore()
   const { compile, compiling, pdfBytes, log } = useCompile()
   const editorRef = useRef<EditorHandle>(null)
@@ -124,6 +128,21 @@ function App() {
     },
   }
 
+  async function handleProjectDeleted(deletedId: string) {
+    if (deletedId !== projectId) return
+    // The open project is gone: fall back to the newest remaining one, or
+    // start a fresh blank project so the editor is never left empty.
+    const [next] = await listProjects()
+    const nextId =
+      next?.id ??
+      (await createProjectWithFiles({
+        name: 'Untitled Project',
+        rootFile: 'main.tex',
+        files: [{ path: 'main.tex', content: blankMainTex }],
+      }))
+    await switchToProject(nextId)
+  }
+
   function handleJumpToEntry(entry: LogEntry) {
     if (entry.line === undefined) return
     if (entry.file && entry.file !== activeFilePath && files.some((f) => f.path === entry.file)) {
@@ -143,6 +162,8 @@ function App() {
               currentProjectId={projectId}
               currentProjectName={projectName}
               onSwitchProject={(id) => void switchToProject(id)}
+              onProjectRenamed={(id, name) => id === projectId && setProjectName(name)}
+              onProjectDeleted={(id) => void handleProjectDeleted(id)}
             />
           ) : (
             <span className="toolbar-project-name">Loading…</span>
