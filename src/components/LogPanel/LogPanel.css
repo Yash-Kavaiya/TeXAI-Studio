@@ -1,8 +1,74 @@
 .log-panel {
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  overflow: auto;
   font-size: 13px;
+}
+
+.log-panel-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-alt);
+  flex-shrink: 0;
+}
+
+.log-panel-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.log-panel-tabs button.active {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.log-panel-tabs button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.log-badge {
+  min-width: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  color: #fff;
+}
+
+.log-badge-error {
+  background: var(--error);
+}
+
+.log-badge-warning {
+  background: var(--warning);
+}
+
+.log-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   font-family: var(--mono);
+}
+
+.log-raw {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .log-entry {
