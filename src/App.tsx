@@ -9,6 +9,7 @@ import { ProjectSwitcher } from './components/ProjectSwitcher/ProjectSwitcher'
 import { SettingsPanel } from './components/settings/SettingsPanel'
 import { BinaryFilePreview } from './components/BinaryFilePreview/BinaryFilePreview'
 import { parseLatexLog } from './engine/logParser'
+import { collectProjectSymbols } from './components/Editor/latexCompletions'
 import type { LogEntry } from './engine/types'
 import { useAutosave } from './hooks/useAutosave'
 import { useCompile } from './hooks/useCompile'
@@ -63,6 +64,25 @@ function App() {
 
   const activeFile = files.find((f) => f.path === activeFilePath)
   const logEntries = useMemo(() => parseLatexLog(log), [log])
+  const projectSymbols = useMemo(() => collectProjectSymbols(files), [files])
+
+  const handleCompile = useCallback(() => {
+    if (projectId && !compiling) void compile(projectId, files, rootFile)
+  }, [compile, compiling, projectId, files, rootFile])
+
+  // Ctrl/Cmd+S and Ctrl/Cmd+Enter compile from anywhere. Inside the editor
+  // CodeMirror handles them first and marks the event as handled.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.defaultPrevented || !(event.ctrlKey || event.metaKey)) return
+      if (event.key === 's' || event.key === 'Enter') {
+        event.preventDefault()
+        handleCompile()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [handleCompile])
 
   // Once the editor for the target file has (re)mounted, apply the jump.
   // The setState-in-effect here is intentional: jumpToLine needs the new
@@ -128,7 +148,7 @@ function App() {
             <span className="toolbar-project-name">Loading…</span>
           )
         }
-        onCompile={() => compile(projectId, files, rootFile)}
+        onCompile={handleCompile}
         compiling={compiling}
         onOpenSettings={() => setShowSettings(true)}
       />
@@ -153,15 +173,17 @@ function App() {
               ref={editorRef}
               value={activeFile.content}
               onChange={(value) => updateFileContent(activeFile.path, value)}
+              getSymbols={() => projectSymbols}
+              onCompileShortcut={handleCompile}
             />
           ) : (
             <div className="pane-placeholder">No file selected</div>
           )
         }
-        right={<PdfPreview pdfBytes={pdfBytes} />}
+        right={<PdfPreview pdfBytes={pdfBytes} fileName={projectName} />}
       />
       <div className="log-panel-container">
-        <LogPanel entries={logEntries} onJumpToEntry={handleJumpToEntry} />
+        <LogPanel entries={logEntries} rawLog={log} onJumpToEntry={handleJumpToEntry} />
       </div>
     </div>
   )
