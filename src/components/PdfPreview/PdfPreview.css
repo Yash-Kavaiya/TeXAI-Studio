@@ -1,16 +1,68 @@
 .pdf-preview {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  background: var(--bg-alt);
+}
+
+.pdf-preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.pdf-preview-toolbar button {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pdf-preview-toolbar button:hover,
+.pdf-preview-toolbar button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pdf-preview-zoom {
+  min-width: 42px;
+  text-align: center;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-preview-spacer {
+  flex: 1;
+}
+
+.pdf-preview-scroll {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
-  padding: 16px;
+}
+
+.pdf-preview-pages {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  background: var(--bg-alt);
+  padding: 16px;
+  /* Pages wider than the pane (when zoomed in) scroll instead of shrinking. */
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
 }
 
 .pdf-preview-page {
-  max-width: 100%;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   background: white;
+  flex-shrink: 0;
 }

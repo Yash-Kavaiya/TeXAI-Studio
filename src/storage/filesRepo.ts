@@ -18,6 +18,23 @@ export async function bulkAddFiles(files: FileRecord[]): Promise<void> {
   await Promise.all([...files.map((file) => tx.store.put(file)), tx.done])
 }
 
+export async function deleteFiles(ids: string[]): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction('files', 'readwrite')
+  await Promise.all([...ids.map((id) => tx.store.delete(id)), tx.done])
+}
+
+/** Re-paths files in one transaction (a folder rename moves every file under it). */
+export async function moveFiles(moves: { id: string; path: string }[], updatedAt: string): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction('files', 'readwrite')
+  for (const { id, path } of moves) {
+    const file = await tx.store.get(id)
+    if (file) await tx.store.put({ ...file, path, kind: inferFileKind(path), updatedAt })
+  }
+  await tx.done
+}
+
 export async function updateFileContent(fileId: string, content: string, updatedAt: string): Promise<void> {
   const db = await getDb()
   const file = await db.get('files', fileId)

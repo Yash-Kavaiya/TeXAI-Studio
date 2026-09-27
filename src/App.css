@@ -5,8 +5,6 @@
 }
 
 .log-panel-container {
-  height: 140px;
-  border-top: 1px solid var(--border);
   flex-shrink: 0;
-  overflow: auto;
+  overflow: hidden;
 }

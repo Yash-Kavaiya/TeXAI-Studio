@@ -1,10 +1,12 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
-import { EditorState } from '@codemirror/state'
+import { EditorState, Prec } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { searchKeymap } from '@codemirror/search'
+import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete'
 import { bracketMatching, defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { latexLanguage } from './latexLanguage'
+import { latexCompletionSource, type ProjectSymbols } from './latexCompletions'
 import './Editor.css'
 
 export interface EditorHandle {
@@ -14,13 +16,22 @@ export interface EditorHandle {
 interface EditorProps {
   value: string
   onChange: (value: string) => void
+  /** Labels and citation keys across the project, offered inside \ref{} / \cite{}. */
+  getSymbols: () => ProjectSymbols
+  /** Ctrl/Cmd+S and Ctrl/Cmd+Enter. */
+  onCompileShortcut: () => void
 }
 
-export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ value, onChange }, ref) {
+export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ value, onChange, getSymbols, onCompileShortcut }, ref) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
+  // Read through refs so the once-mounted editor always sees the latest props.
+  const getSymbolsRef = useRef(getSymbols)
+  getSymbolsRef.current = getSymbols
+  const onCompileRef = useRef(onCompileShortcut)
+  onCompileRef.current = onCompileShortcut
 
   useImperativeHandle(
     ref,
@@ -50,9 +61,19 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ va
         highlightActiveLine(),
         history(),
         bracketMatching(),
+        closeBrackets(),
+        // Pair only brackets: quotes/apostrophes are ordinary prose in LaTeX.
+        EditorState.languageData.of(() => [{ closeBrackets: { brackets: ['(', '[', '{'] } }]),
+        autocompletion({ override: [latexCompletionSource(() => getSymbolsRef.current())] }),
+        Prec.highest(
+          keymap.of([
+            { key: 'Mod-s', preventDefault: true, run: () => (onCompileRef.current(), true) },
+            { key: 'Mod-Enter', preventDefault: true, run: () => (onCompileRef.current(), true) },
+          ]),
+        ),
         latexLanguage,
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-        keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+        keymap.of([...closeBracketsKeymap, ...completionKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             onChangeRef.current(update.state.doc.toString())

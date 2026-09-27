@@ -2,6 +2,26 @@
 
 A browser-based LaTeX editor: CodeMirror editing, in-browser pdfTeX (WASM) compilation,
 live PDF preview, multi-file projects, and optional AI-generated project templates.
+Everything runs client-side; projects are stored in the browser (IndexedDB).
+
+## Features
+
+- **Editor** — LaTeX highlighting, autocomplete for commands/environments, `\ref`/`\cref`
+  completion from the project's `\label`s and `\cite` completion from `.bib` keys, bracket
+  auto-closing. `Ctrl/Cmd+S` or `Ctrl/Cmd+Enter` compiles; optional auto-compile.
+- **Compilation** — pdfLaTeX + BibTeX in WebAssembly, re-running until references resolve.
+  Packages load on demand from a bundled TeX Live 2019 mirror (IEEE, ACM, Springer LNCS,
+  beamer, KOMA-Script, TikZ, siunitx, cleveref, …). Not available: biblatex/biber, minted,
+  `svg`, fontspec (XeTeX/LuaTeX only).
+- **Projects** — multi-file with folders; create, rename, delete files and folders; upload
+  images (PNG/JPEG/PDF) for `\includegraphics`; rename/delete projects; export a project as
+  `.zip` and import a `.zip` as a new project.
+- **Preview & log** — PDF zoom, fit-to-width and download; errors/warnings with click-to-jump
+  to the source line, plus the raw compiler log.
+- **Layout** — resizable file tree, editor/preview split and log panel.
+- **AI templates (optional)** — describe a document and Claude scaffolds a complete project;
+  preferences are remembered via mem0. Bring your own API keys (Settings ⚙); they stay in
+  your browser.
 
 ## Development
 

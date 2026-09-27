@@ -5,6 +5,8 @@
 
 .file-tree-header {
   display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   align-items: center;
   justify-content: space-between;
   padding: 0 8px 6px;
@@ -14,26 +16,56 @@
   letter-spacing: 0.04em;
 }
 
-.file-tree-upload {
+.file-tree-header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.file-tree-button {
   font-size: 12px;
   text-transform: none;
   letter-spacing: normal;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--bg);
   color: inherit;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.file-tree-upload:hover:not(:disabled) {
+.file-tree-button:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent);
 }
 
-.file-tree-upload:disabled {
+.file-tree-button:disabled,
+.file-tree-icon:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+.file-tree-create,
+.file-tree-rename {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-tree-create {
+  padding: 0 8px 6px;
+}
+
+.file-tree-input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 13px;
+  padding: 2px 4px;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  background: var(--bg);
+  color: inherit;
 }
 
 .file-tree-notice {
@@ -42,20 +74,30 @@
   color: var(--text-muted);
 }
 
-.file-tree-folder {
+.file-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding: 3px 8px;
-  color: var(--text-muted);
+  white-space: nowrap;
 }
 
-.file-tree-file {
-  padding: 3px 8px;
-  cursor: pointer;
-  white-space: nowrap;
+.file-tree-name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.file-tree-file:hover {
+.file-tree-folder {
+  color: var(--text-muted);
+}
+
+.file-tree-file {
+  cursor: pointer;
+}
+
+.file-tree-row:hover {
   background: var(--accent-bg);
 }
 
@@ -63,4 +105,46 @@
   background: var(--accent-bg);
   color: var(--accent);
   font-weight: 600;
+}
+
+/* Row actions appear on hover or keyboard focus, so the tree stays quiet. */
+.file-tree-row-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+}
+
+.file-tree-row:hover .file-tree-row-actions,
+.file-tree-row-actions:focus-within {
+  opacity: 1;
+}
+
+.file-tree-icon {
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1;
+  padding: 2px 4px;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.file-tree-icon:hover:not(:disabled) {
+  background: var(--bg);
+  color: var(--accent);
+}
+
+.file-tree-icon.danger {
+  color: #d93025;
+}
+
+.file-tree-confirm {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--text-muted);
 }

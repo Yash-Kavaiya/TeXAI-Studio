@@ -2,13 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Editor, type EditorHandle } from './components/Editor/Editor'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { SplitPane } from './components/layout/SplitPane'
-import { FileTree } from './components/FileTree/FileTree'
+import { ResizeHandle } from './components/layout/ResizeHandle'
+import { useStoredNumber } from './hooks/useStoredNumber'
+import { FileTree, type FileTreeActions } from './components/FileTree/FileTree'
 import { PdfPreview } from './components/PdfPreview/PdfPreview'
 import { LogPanel } from './components/LogPanel/LogPanel'
 import { ProjectSwitcher } from './components/ProjectSwitcher/ProjectSwitcher'
 import { SettingsPanel } from './components/settings/SettingsPanel'
 import { BinaryFilePreview } from './components/BinaryFilePreview/BinaryFilePreview'
 import { parseLatexLog } from './engine/logParser'
+import { collectProjectSymbols } from './components/Editor/latexCompletions'
 import type { LogEntry } from './engine/types'
 import { useAutosave } from './hooks/useAutosave'
 import { useCompile } from './hooks/useCompile'
@@ -16,8 +19,18 @@ import { useProjectStore } from './state/projectStore'
 import { setMeta } from './storage/metaRepo'
 import { loadProjectData } from './storage/loadProject'
 import { ensureBootstrapped } from './storage/bootstrap'
+import { listProjects } from './storage/projectsRepo'
+import { createProjectWithFiles } from './storage/projectFactory'
+import blankMainTex from './storage/blankProject/main.tex?raw'
+import { projectToZip } from './storage/projectZip'
+import { downloadBytes, safeFileName } from './utils/download'
 import { IMPORT_ACCEPT, importFiles } from './storage/importFiles'
+import { createEntry, deleteEntry, renameEntry } from './storage/fileOps'
 import './App.css'
+
+const DEFAULT_LOG_HEIGHT = 140
+// Auto-compile waits for typing to pause this long.
+const AUTO_COMPILE_DELAY_MS = 1500
 
 function App() {
   const {
@@ -30,11 +43,16 @@ function App() {
     setActiveFile,
     updateFileContent,
     upsertFiles,
+    removeFiles,
+    moveFiles,
+    setProjectName,
   } = useProjectStore()
   const { compile, compiling, pdfBytes, log } = useCompile()
   const editorRef = useRef<EditorHandle>(null)
   const [pendingJumpLine, setPendingJumpLine] = useState<number | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [logHeight, setLogHeight] = useStoredNumber('texai.layout.logHeight', DEFAULT_LOG_HEIGHT)
+  const [autoCompile, setAutoCompile] = useStoredNumber('texai.autoCompile', 0)
 
   const switchToProject = useCallback(
     async (id: string) => {
@@ -60,6 +78,52 @@ function App() {
 
   const activeFile = files.find((f) => f.path === activeFilePath)
   const logEntries = useMemo(() => parseLatexLog(log), [log])
+  const projectSymbols = useMemo(() => collectProjectSymbols(files), [files])
+
+  const handleCompile = useCallback(() => {
+    if (projectId && !compiling) void compile(projectId, files, rootFile)
+  }, [compile, compiling, projectId, files, rootFile])
+
+  // Auto-compile: recompile once edits pause. Read through refs so the timer
+  // re-arms only when files change, not on every render. An edit that lands
+  // mid-compile is queued and compiled as soon as the current run finishes.
+  const handleCompileRef = useRef(handleCompile)
+  const compilingRef = useRef(compiling)
+  const autoCompilePendingRef = useRef(false)
+  useEffect(() => {
+    handleCompileRef.current = handleCompile
+    compilingRef.current = compiling
+  })
+
+  useEffect(() => {
+    if (!autoCompile || !projectId) return
+    const timer = setTimeout(() => {
+      if (compilingRef.current) autoCompilePendingRef.current = true
+      else handleCompileRef.current()
+    }, AUTO_COMPILE_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [files, autoCompile, projectId])
+
+  useEffect(() => {
+    if (!compiling && autoCompilePendingRef.current) {
+      autoCompilePendingRef.current = false
+      handleCompileRef.current()
+    }
+  }, [compiling])
+
+  // Ctrl/Cmd+S and Ctrl/Cmd+Enter compile from anywhere. Inside the editor
+  // CodeMirror handles them first and marks the event as handled.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.defaultPrevented || !(event.ctrlKey || event.metaKey)) return
+      if (event.key === 's' || event.key === 'Enter') {
+        event.preventDefault()
+        handleCompile()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [handleCompile])
 
   // Once the editor for the target file has (re)mounted, apply the jump.
   // The setState-in-effect here is intentional: jumpToLine needs the new
@@ -73,11 +137,53 @@ function App() {
     }
   }, [activeFilePath, pendingJumpLine])
 
-  async function handleUpload(picked: File[]): Promise<string[]> {
-    const { imported, skipped } = await importFiles(projectId, files, picked)
-    upsertFiles(imported)
-    if (imported.length > 0) setActiveFile(imported[imported.length - 1].path)
-    return skipped
+  const fileTreeActions: FileTreeActions = {
+    async create(input, type) {
+      const result = await createEntry(projectId, files, input, type)
+      if ('error' in result) return result.error
+      upsertFiles([result.file])
+      if (type === 'file') setActiveFile(result.file.path)
+      return null
+    },
+    async rename(path, newName) {
+      const result = await renameEntry(files, path, newName, rootFile)
+      if ('error' in result) return result.error
+      moveFiles(result.moves)
+      return null
+    },
+    async remove(path) {
+      const result = await deleteEntry(files, path, rootFile)
+      if ('error' in result) return result.error
+      removeFiles(result.paths)
+      return null
+    },
+    async upload(picked) {
+      const { imported, skipped } = await importFiles(projectId, files, picked)
+      upsertFiles(imported)
+      if (imported.length > 0) setActiveFile(imported[imported.length - 1].path)
+      return skipped
+    },
+  }
+
+  async function handleProjectDeleted(deletedId: string) {
+    if (deletedId !== projectId) return
+    // The open project is gone: fall back to the newest remaining one, or
+    // start a fresh blank project so the editor is never left empty.
+    const [next] = await listProjects()
+    const nextId =
+      next?.id ??
+      (await createProjectWithFiles({
+        name: 'Untitled Project',
+        rootFile: 'main.tex',
+        files: [{ path: 'main.tex', content: blankMainTex }],
+      }))
+    await switchToProject(nextId)
+  }
+
+  // The log panel sits at the bottom, so its height is the distance from the
+  // pointer to the bottom of the window (kept between 60px and 60% of it).
+  function dragLogPanel(clientY: number) {
+    setLogHeight(Math.round(Math.min(window.innerHeight * 0.6, Math.max(60, window.innerHeight - clientY))))
   }
 
   function handleJumpToEntry(entry: LogEntry) {
@@ -99,12 +205,19 @@ function App() {
               currentProjectId={projectId}
               currentProjectName={projectName}
               onSwitchProject={(id) => void switchToProject(id)}
+              onProjectRenamed={(id, name) => id === projectId && setProjectName(name)}
+              onProjectDeleted={(id) => void handleProjectDeleted(id)}
+              onExportCurrent={() =>
+                downloadBytes(projectToZip(files), `${safeFileName(projectName, 'project')}.zip`, 'application/zip')
+              }
             />
           ) : (
             <span className="toolbar-project-name">Loading…</span>
           )
         }
-        onCompile={() => compile(projectId, files, rootFile)}
+        onCompile={handleCompile}
+        autoCompile={autoCompile === 1}
+        onToggleAutoCompile={(on) => setAutoCompile(on ? 1 : 0)}
         compiling={compiling}
         onOpenSettings={() => setShowSettings(true)}
       />
@@ -115,8 +228,9 @@ function App() {
             files={files}
             activePath={activeFilePath}
             onSelectFile={setActiveFile}
+            rootFile={rootFile}
             uploadAccept={IMPORT_ACCEPT}
-            onUpload={handleUpload}
+            actions={fileTreeActions}
           />
         }
         center={
@@ -128,15 +242,23 @@ function App() {
               ref={editorRef}
               value={activeFile.content}
               onChange={(value) => updateFileContent(activeFile.path, value)}
+              getSymbols={() => projectSymbols}
+              onCompileShortcut={handleCompile}
             />
           ) : (
             <div className="pane-placeholder">No file selected</div>
           )
         }
-        right={<PdfPreview pdfBytes={pdfBytes} />}
+        right={<PdfPreview pdfBytes={pdfBytes} fileName={projectName} />}
       />
-      <div className="log-panel-container">
-        <LogPanel entries={logEntries} onJumpToEntry={handleJumpToEntry} />
+      <ResizeHandle
+        orientation="horizontal"
+        label="Resize log panel"
+        onDrag={dragLogPanel}
+        onReset={() => setLogHeight(DEFAULT_LOG_HEIGHT)}
+      />
+      <div className="log-panel-container" style={{ height: logHeight }}>
+        <LogPanel entries={logEntries} rawLog={log} onJumpToEntry={handleJumpToEntry} />
       </div>
     </div>
   )

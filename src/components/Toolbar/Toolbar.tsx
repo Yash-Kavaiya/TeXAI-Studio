@@ -5,10 +5,19 @@ interface ToolbarProps {
   projectSlot: ReactNode
   onCompile: () => void
   compiling: boolean
+  autoCompile: boolean
+  onToggleAutoCompile: (on: boolean) => void
   onOpenSettings: () => void
 }
 
-export function Toolbar({ projectSlot, onCompile, compiling, onOpenSettings }: ToolbarProps) {
+export function Toolbar({
+  projectSlot,
+  onCompile,
+  compiling,
+  autoCompile,
+  onToggleAutoCompile,
+  onOpenSettings,
+}: ToolbarProps) {
   return (
     <div className="toolbar">
       <span className="toolbar-title">TeXAI-Studio</span>
@@ -17,7 +26,16 @@ export function Toolbar({ projectSlot, onCompile, compiling, onOpenSettings }: T
       <button className="toolbar-settings-btn" onClick={onOpenSettings} title="Settings">
         ⚙
       </button>
-      <button className="toolbar-compile-btn" onClick={onCompile} disabled={compiling}>
+      <label className="toolbar-auto-compile" title="Recompile automatically when you stop typing">
+        <input type="checkbox" checked={autoCompile} onChange={(e) => onToggleAutoCompile(e.target.checked)} />
+        Auto-compile
+      </label>
+      <button
+        className="toolbar-compile-btn"
+        onClick={onCompile}
+        disabled={compiling}
+        title="Compile (Ctrl+S or Ctrl+Enter)"
+      >
         {compiling ? 'Compiling…' : 'Compile'}
       </button>
     </div>

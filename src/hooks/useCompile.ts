@@ -29,7 +29,7 @@ export function useCompile() {
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | undefined>(undefined)
   const [log, setLog] = useState<string>('')
   const engineRef = useRef<PdfTeXEngineClient | null>(null)
-  const lastProjectIdRef = useRef<string | null>(null)
+  const lastWorkDirKeyRef = useRef<string | null>(null)
   const bstCacheRef = useRef(new Map<string, string | null>())
 
   async function fetchBibStyle(style: string): Promise<string | null> {
@@ -52,11 +52,14 @@ export function useCompile() {
       }
       const engine = engineRef.current
 
-      // Stale .aux/.bbl/section files from a previously compiled project
-      // would otherwise leak into this one's working directory.
-      if (lastProjectIdRef.current !== projectId) {
+      // The engine's working directory persists between compiles. Start it
+      // fresh when the project or its set of paths changes, so another
+      // project's .aux/.bbl files, or a deleted/renamed file that an \input
+      // still names, can't leak into this compile.
+      const workDirKey = [projectId, ...files.map((f) => f.path).sort()].join('\n')
+      if (lastWorkDirKeyRef.current !== workDirKey) {
         engine.flushWorkDir()
-        lastProjectIdRef.current = projectId
+        lastWorkDirKeyRef.current = workDirKey
       }
 
       const dirs = new Set<string>()

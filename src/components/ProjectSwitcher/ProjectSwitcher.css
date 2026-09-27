@@ -57,3 +57,92 @@
   border-top: 1px solid var(--border);
   color: var(--accent);
 }
+
+.project-switcher-menu {
+  min-width: 260px;
+  max-width: 360px;
+}
+
+.project-switcher-item:not(.project-switcher-new) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.project-switcher-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-switcher-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+}
+
+.project-switcher-item:hover .project-switcher-actions,
+.project-switcher-actions:focus-within {
+  opacity: 1;
+}
+
+.project-switcher-actions button,
+.project-switcher-confirm button {
+  padding: 2px 5px;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.project-switcher-actions button:hover,
+.project-switcher-confirm button:hover {
+  background: var(--bg);
+  color: var(--accent);
+}
+
+.project-switcher-confirm {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--text-muted);
+}
+
+.project-switcher-confirm button.danger {
+  color: var(--error);
+}
+
+.project-switcher-rename {
+  flex: 1;
+  margin: 0;
+}
+
+.project-switcher-rename input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 2px 4px;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  background: var(--bg);
+  color: inherit;
+}
+
+.project-switcher-footer {
+  color: var(--text-muted);
+}
+
+.project-switcher-notice {
+  padding: 6px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: normal;
+}
