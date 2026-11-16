@@ -3,6 +3,7 @@ import './Toolbar.css'
 
 interface ToolbarProps {
   projectSlot: ReactNode
+  githubSlot?: ReactNode
   onCompile: () => void
   compiling: boolean
   autoCompile: boolean
@@ -12,6 +13,7 @@ interface ToolbarProps {
 
 export function Toolbar({
   projectSlot,
+  githubSlot,
   onCompile,
   compiling,
   autoCompile,
@@ -23,6 +25,7 @@ export function Toolbar({
       <span className="toolbar-title">TeXAI-Studio</span>
       {projectSlot}
       <div className="toolbar-spacer" />
+      {githubSlot}
       <button className="toolbar-settings-btn" onClick={onOpenSettings} title="Settings">
         ⚙
       </button>

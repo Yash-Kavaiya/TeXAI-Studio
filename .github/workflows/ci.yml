@@ -31,6 +31,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Unit tests: GitHub push planning, workflow generation and the OAuth
+      # function (api/auth/github.ts).
+      - name: Test
+        run: npm test
+
       # `npm run build` is `tsc -b && vite build`, so this also typechecks.
       - name: Typecheck & build
         run: npm run build

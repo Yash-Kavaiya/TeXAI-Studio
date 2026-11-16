@@ -56,14 +56,29 @@ export function useCompile() {
       // fresh when the project or its set of paths changes, so another
       // project's .aux/.bbl files, or a deleted/renamed file that an \input
       // still names, can't leak into this compile.
-      const workDirKey = [projectId, ...files.map((f) => f.path).sort()].join('\n')
+      const workDirKey = [projectId, rootFile, ...files.map((f) => f.path).sort()].join('\n')
       if (lastWorkDirKeyRef.current !== workDirKey) {
         engine.flushWorkDir()
         lastWorkDirKeyRef.current = workDirKey
       }
 
+      // The engine only finds its output when the main file is in the working
+      // directory, so a nested root (e.g. "paper/main.tex", common in imported
+      // repos) is compiled from its own folder — like `latexmk -cd` and the CI
+      // workflow do. Files in that folder move up to the working directory;
+      // anything outside it keeps its path.
+      const rootDir = dirname(rootFile)
+      const toWorkPath = (path: string) =>
+        rootDir && path.startsWith(`${rootDir}/`) ? path.slice(rootDir.length + 1) : path
+      const moved = files.filter((f) => toWorkPath(f.path) !== f.path).map((f) => ({ ...f, path: toWorkPath(f.path) }))
+      const movedPaths = new Set(moved.map((f) => f.path))
+      // On a name clash, the file from the root's folder wins.
+      const workFiles = [...files.filter((f) => toWorkPath(f.path) === f.path && !movedPaths.has(f.path)), ...moved].filter(
+        (f) => f.path !== '',
+      )
+
       const dirs = new Set<string>()
-      for (const file of files) {
+      for (const file of workFiles) {
         const dir = file.path.endsWith('/') ? file.path.slice(0, -1) : dirname(file.path)
         const segments = dir ? dir.split('/') : []
         for (let i = 1; i <= segments.length; i++) dirs.add(segments.slice(0, i).join('/'))
@@ -71,14 +86,14 @@ export function useCompile() {
       for (const dir of [...dirs].sort((a, b) => a.split('/').length - b.split('/').length)) {
         engine.makeMemFSFolder(dir)
       }
-      for (const file of files) {
+      for (const file of workFiles) {
         if (!file.path.endsWith('/')) engine.writeMemFSFile(file.path, file.data ?? file.content)
       }
-      for (const style of findBibStyles(files)) {
+      for (const style of findBibStyles(workFiles)) {
         const bst = await fetchBibStyle(style)
         if (bst) engine.writeMemFSFile(`${style}.bst`, bst)
       }
-      engine.setEngineMainFile(rootFile)
+      engine.setEngineMainFile(toWorkPath(rootFile))
 
       let result = await engine.compileLaTeX()
       for (let pass = 1; pass < MAX_PASSES && result.status === 0 && RERUN_PATTERN.test(result.log); pass++) {

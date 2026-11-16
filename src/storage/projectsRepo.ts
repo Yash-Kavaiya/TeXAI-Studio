@@ -1,4 +1,4 @@
-import { getDb, type ProjectRecord } from './db'
+import { getDb, type GithubLink, type ProjectRecord } from './db'
 
 export async function createProject(project: ProjectRecord): Promise<void> {
   const db = await getDb()
@@ -29,6 +29,13 @@ export async function renameProject(id: string, name: string): Promise<void> {
   const project = await db.get('projects', id)
   if (!project) return
   await db.put('projects', { ...project, name, updatedAt: new Date().toISOString() })
+}
+
+export async function setProjectGithub(id: string, github: GithubLink | undefined): Promise<void> {
+  const db = await getDb()
+  const project = await db.get('projects', id)
+  if (!project) return
+  await db.put('projects', { ...project, github })
 }
 
 /** Deletes a project and every file in it, atomically. */

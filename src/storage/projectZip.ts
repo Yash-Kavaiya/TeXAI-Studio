@@ -26,10 +26,30 @@ export async function projectFromZip(zip: File): Promise<ProjectTemplateInput & 
     throw new Error('That file isn’t a readable .zip archive.')
   }
 
+  return { ...filesFromEntries(entries, 'that .zip'), name: zip.name.replace(/\.zip$/i, '') || 'Imported Project' }
+}
+
+/** True for paths that can become project files (text sources or images). */
+export function isImportablePath(path: string): boolean {
+  return !JUNK_RE.test(path) && (TEXT_RE.test(path) || BINARY_RE.test(path))
+}
+
+/**
+ * Turns raw path → bytes entries (from a .zip or a GitHub repo) into project
+ * files: drops OS clutter and a single wrapping top-level folder, decodes text,
+ * keeps images as bytes, and picks the root .tex file. Throws a user-facing
+ * error (naming `source`) when there's no .tex file.
+ */
+export function filesFromEntries(
+  entries: Record<string, Uint8Array>,
+  source: string,
+): Omit<ProjectTemplateInput, 'name'> & { skipped: string[]; unwrapped: string } {
   let paths = Object.keys(entries).filter((p) => !JUNK_RE.test(p))
   // Zips made by "compress folder" wrap everything in one top-level folder; drop it.
   const top = paths[0]?.split('/')[0]
+  let unwrapped = ''
   if (top && paths.every((p) => p.startsWith(`${top}/`))) {
+    unwrapped = top
     entries = Object.fromEntries(paths.map((p) => [p.slice(top.length + 1), entries[p]]))
     paths = Object.keys(entries).filter(Boolean)
   }
@@ -44,12 +64,12 @@ export async function projectFromZip(zip: File): Promise<ProjectTemplateInput & 
   }
 
   const texFiles = files.filter((f) => f.path.endsWith('.tex'))
-  if (texFiles.length === 0) throw new Error('No .tex files found in that .zip.')
+  if (texFiles.length === 0) throw new Error(`No .tex files found in ${source}.`)
   const depth = (path: string) => path.split('/').length
   const rootFile =
     texFiles.find((f) => f.path === 'main.tex')?.path ??
     texFiles.filter((f) => /\\documentclass/.test(f.content)).sort((a, b) => depth(a.path) - depth(b.path))[0]?.path ??
     texFiles[0].path
 
-  return { name: zip.name.replace(/\.zip$/i, '') || 'Imported Project', rootFile, files, skipped }
+  return { rootFile, files, skipped, unwrapped }
 }
