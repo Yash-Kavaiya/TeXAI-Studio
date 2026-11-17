@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { GithubLink } from '../storage/db'
 
 export interface ProjectFile {
   id: string
@@ -13,6 +14,7 @@ interface LoadedProject {
   projectName: string
   rootFile: string
   files: ProjectFile[]
+  github?: GithubLink
 }
 
 interface ProjectState {
@@ -21,9 +23,11 @@ interface ProjectState {
   files: ProjectFile[]
   activeFilePath: string
   rootFile: string
+  github: GithubLink | undefined
   loadProject: (project: LoadedProject) => void
   setActiveFile: (path: string) => void
   setProjectName: (name: string) => void
+  setGithub: (github: GithubLink | undefined) => void
   updateFileContent: (path: string, content: string) => void
   upsertFiles: (files: ProjectFile[]) => void
   removeFiles: (paths: string[]) => void
@@ -36,10 +40,12 @@ export const useProjectStore = create<ProjectState>((set) => ({
   files: [],
   activeFilePath: '',
   rootFile: 'main.tex',
-  loadProject: ({ projectId, projectName, rootFile, files }) =>
-    set({ projectId, projectName, rootFile, files, activeFilePath: rootFile }),
+  github: undefined,
+  loadProject: ({ projectId, projectName, rootFile, files, github }) =>
+    set({ projectId, projectName, rootFile, files, github, activeFilePath: rootFile }),
   setActiveFile: (path) => set({ activeFilePath: path }),
   setProjectName: (name) => set({ projectName: name }),
+  setGithub: (github) => set({ github }),
   updateFileContent: (path, content) =>
     set((state) => ({
       files: state.files.map((f) => (f.path === path ? { ...f, content } : f)),

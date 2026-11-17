@@ -9,6 +9,8 @@ import { PdfPreview } from './components/PdfPreview/PdfPreview'
 import { LogPanel } from './components/LogPanel/LogPanel'
 import { ProjectSwitcher } from './components/ProjectSwitcher/ProjectSwitcher'
 import { SettingsPanel } from './components/settings/SettingsPanel'
+import { GitHubMenu } from './components/github/GitHubMenu'
+import { useGithubAuth } from './github/authStore'
 import { BinaryFilePreview } from './components/BinaryFilePreview/BinaryFilePreview'
 import { parseLatexLog } from './engine/logParser'
 import { collectProjectSymbols } from './components/Editor/latexCompletions'
@@ -19,7 +21,7 @@ import { useProjectStore } from './state/projectStore'
 import { setMeta } from './storage/metaRepo'
 import { loadProjectData } from './storage/loadProject'
 import { ensureBootstrapped } from './storage/bootstrap'
-import { listProjects } from './storage/projectsRepo'
+import { listProjects, setProjectGithub } from './storage/projectsRepo'
 import { createProjectWithFiles } from './storage/projectFactory'
 import blankMainTex from './storage/blankProject/main.tex?raw'
 import { projectToZip } from './storage/projectZip'
@@ -46,6 +48,8 @@ function App() {
     removeFiles,
     moveFiles,
     setProjectName,
+    github,
+    setGithub,
   } = useProjectStore()
   const { compile, compiling, pdfBytes, log } = useCompile()
   const editorRef = useRef<EditorHandle>(null)
@@ -62,6 +66,10 @@ function App() {
     },
     [loadProject],
   )
+
+  useEffect(() => {
+    useGithubAuth.getState().init()
+  }, [])
 
   useEffect(() => {
     async function boot() {
@@ -188,8 +196,16 @@ function App() {
 
   function handleJumpToEntry(entry: LogEntry) {
     if (entry.line === undefined) return
-    if (entry.file && entry.file !== activeFilePath && files.some((f) => f.path === entry.file)) {
-      setActiveFile(entry.file)
+    // A nested root file is compiled from its own folder, so log paths are
+    // relative to that folder; map them back to project paths.
+    const rootDir = rootFile.includes('/') ? rootFile.slice(0, rootFile.lastIndexOf('/')) : ''
+    const file = entry.file
+      ? [entry.file.replace(/^\.\//, ''), `${rootDir}/${entry.file.replace(/^\.\//, '')}`].find(
+          (candidate) => files.some((f) => f.path === candidate),
+        )
+      : undefined
+    if (file && file !== activeFilePath) {
+      setActiveFile(file)
       setPendingJumpLine(entry.line)
     } else {
       editorRef.current?.jumpToLine(entry.line)
@@ -214,6 +230,22 @@ function App() {
           ) : (
             <span className="toolbar-project-name">Loading…</span>
           )
+        }
+        githubSlot={
+          projectId ? (
+            <GitHubMenu
+              projectName={projectName}
+              files={files}
+              rootFile={rootFile}
+              link={github}
+              pdfBytes={pdfBytes}
+              onImported={(id) => void switchToProject(id)}
+              onLinked={(link) => {
+                setGithub(link)
+                void setProjectGithub(projectId, link)
+              }}
+            />
+          ) : null
         }
         onCompile={handleCompile}
         autoCompile={autoCompile === 1}

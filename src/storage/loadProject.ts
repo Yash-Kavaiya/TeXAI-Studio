@@ -9,6 +9,7 @@ export async function loadProjectData(projectId: string) {
     projectId: project.id,
     projectName: project.name,
     rootFile: project.rootFile,
+    github: project.github,
     files: files.map((f) => ({ id: f.id, path: f.path, content: f.content, data: f.data })),
   }
 }

@@ -1,11 +1,21 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 
+/** The GitHub repository folder a project was imported from / pushes to. */
+export interface GithubLink {
+  owner: string
+  repo: string
+  branch: string
+  /** Folder inside the repo that holds the project; '' for the repo root. */
+  dir: string
+}
+
 export interface ProjectRecord {
   id: string
   name: string
   rootFile: string
   createdAt: string
   updatedAt: string
+  github?: GithubLink
 }
 
 export type FileKind = 'tex' | 'bib' | 'image' | 'other'

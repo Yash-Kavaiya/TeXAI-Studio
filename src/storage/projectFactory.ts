@@ -1,11 +1,14 @@
 import { createProject } from './projectsRepo'
 import { bulkAddFiles, inferFileKind } from './filesRepo'
+import type { GithubLink } from './db'
 
 export interface ProjectTemplateInput {
   name: string
   rootFile: string
   /** `data` carries raw bytes for binary files (images); `content` is then empty. */
   files: { path: string; content: string; data?: Uint8Array }[]
+  /** Set when the project was imported from (and pushes back to) GitHub. */
+  github?: GithubLink
 }
 
 /** The single place that creates a Project + its Files together — used by
@@ -21,6 +24,7 @@ export async function createProjectWithFiles(input: ProjectTemplateInput): Promi
     rootFile: input.rootFile,
     createdAt: now,
     updatedAt: now,
+    ...(input.github ? { github: input.github } : {}),
   })
 
   await bulkAddFiles(
